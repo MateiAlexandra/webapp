@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html>  
+<head> 
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no"/>
+  <title>Primăria Mogoșoaia</title>
+  <link rel="stylesheet" href="https://js.arcgis.com/3.18/dijit/themes/claro/claro.css">    
+  <link rel="stylesheet" href="https://js.arcgis.com/3.18/esri/css/esri.css">
+  <style> 
+    html, body { height: 100%; width: 100%; margin: 0; padding: 0; }
+
+    #map{
+      padding:0;
+    }
+    #layerListPane{
+      border: solid 1px darkgray;
+      width:22%;
+    }
+
+    .esriLayer{
+      background-color: #f0f0f0;
+    }
+    .esriLayerList .esriList{
+        border-top:none;
+    }
+    .esriLayerList .esriTitle {
+      background-color: #f0f0f0;
+      border-bottom:none;
+    }
+    .esriLayerList .esriList ul{
+      background-color: #f0f0f0;
+    }
+    #header {
+        height: 80px; 
+        overflow: auto;
+        padding: 0.5em;
+      }
+    #search {
+         display: block;
+         position: absolute;
+         z-index: 999;
+         top: 21px;
+         left: 65px;
+    }
+    .editare{
+    display: inline-block;
+    position: absolute;
+    border-radius: 8px;
+    top:260px;
+    left:50px;
+    background-color: white;
+    color: black;
+    border: 1px solid;
+    text-align: center;
+    font-size: 12px;
+    padding: 10px;
+    width: 200px;
+    }
+    .analiza{
+    display: inline-block;
+    position: absolute;
+    border-radius: 8px;
+    top:280px;
+    left:50px;
+    background-color: white;
+    color: black;
+    border: 1px solid;
+    text-align: center;
+    font-size: 12px;
+    padding: 10px;
+    width: 200px;
+    }
+	#printButton{
+    display: block;
+    position: absolute;
+    z-index: 999;
+    top:550px;
+    left:10px;
+    color:white;
+    }
+
+  .esriPrintout{
+  color:#dd2626;
+  text-decoration:underline;
+  font-weight: bold;
+  text-transform: uppercase;
+    }
+  #marcaje{
+  display: block;
+  position: absolute;
+  z-index: 999;
+  top: 470px;
+  left: 20px;   
+  }
+  p{
+  color: black;
+  position: relative;
+  top: 110px;
+  text-align: justify;
+  }
+ul.Sursa{
+  color: black;
+  position: relative;
+  top: 120px;
+  text-align: justify;
+}
+p.modulE{
+  color: black;
+  position: relative;
+  top: 70px;
+  text-align: justify;
+  font-size: 15px;
+}
+p.modulA{
+  color: black;
+  position: relative;
+  top: 70px;
+  text-align: justify;
+  font-size: 15px;
+}
+}
+ 
+  </style> 
+   <script src="https://js.arcgis.com/3.18/"></script>
+  <script> 
+    var map, toolbar, symbol, geomTask;
+    require([
+    "esri/map",
+    "esri/toolbars/draw",
+    "esri/dijit/editing/AttachmentEditor",
+    "esri/graphic",
+	  "esri/dijit/Search",
+    "esri/dijit/Scalebar",
+    "esri/dijit/Print",	
+	  "esri/layers/FeatureLayer",
+    "esri/dijit/Popup",
+    "esri/dijit/PopupTemplate",
+    "esri/renderers/HeatmapRenderer",
+    "esri/symbols/SimpleMarkerSymbol",
+    "esri/symbols/SimpleFillSymbol",
+    "esri/symbols/SimpleLineSymbol",
+    "esri/symbols/TextSymbol",
+    "esri/dijit/LayerList",
+    "esri/tasks/locator",
+    "esri/Color",
+	  "esri/dijit/BasemapGallery", 
+	  "esri/arcgis/utils",
+    "esri/config",
+    "dojo/parser",
+    "dojo/on",
+    "dijit/registry",
+	  "dojo/dom",
+    "dojo/dom-construct",
+    "dijit/layout/BorderContainer", 
+	  "dijit/layout/ContentPane", 
+    "dijit/layout/TabContainer",
+	  "dijit/TitlePane",
+    "dijit/form/Button", 
+    "dijit/WidgetSet",
+    "dojo/domReady!"
+    ], function(
+    Map,
+    Draw,
+    AttachmentEditor,
+    Graphic,
+	  Search,
+    Scalebar,
+    Print,	
+	  FeatureLayer,
+    Popup,
+    PopupTemplate,
+    HeatmapRenderer,
+    SimpleMarkerSymbol,
+    SimpleFillSymbol,
+    SimpleLineSymbol,
+    TextSymbol,
+    LayerList,
+    Locator,
+    Color,
+	  BasemapGallery, 
+	  arcgisUtils,
+    esriConfig, 
+    parser,
+    on,
+    registry,
+	  dom,
+    domConstruct,
+    Button
+    ) {
+      parser.parse();
+
+    //Enable CORS
+     esriConfig.defaults.io.corsEnabledServers.push("https://sampleserver6.arcgisonline.com");
+
+      
+      var sfs = new SimpleFillSymbol(
+          SimpleFillSymbol.STYLE_SOLID, 
+          new SimpleLineSymbol(
+            SimpleLineSymbol.STYLE_SOLID, 
+            new Color([111, 0, 255]), 
+            2
+          ), 
+          new Color([111, 0, 255, 0.15])
+        );
+
+      var popup = new Popup({
+          fillSymbol: sfs
+        }, domConstruct.create("div"));
+
+
+      map = new Map("map", {
+        basemap: "topo",
+        center: [25.993612, 44.526098],
+        zoom: 13,
+        infoWindow: popup
+      });
+
+      map.on("load", createToolbar);
+  
+      // loop through all dijits, connect onClick event
+        // listeners for buttons to activate drawing tools
+        registry.forEach(function(d) {
+          // d is a reference to a dijit
+          // could be a layout container or a button
+          if ( d.declaredClass === "dijit.form.Button" ) {
+            d.on("click", activateTool);
+          }
+        });
+
+        function activateTool() {
+          var tool = this.label.toUpperCase().replace(/ /g, "_");
+          toolbar.activate(Draw[tool]);
+          // map.hideZoomSlider();
+        }
+
+        function createToolbar(themap) {
+          toolbar = new Draw(map);
+          toolbar.on("draw-end", addToMap);
+        }
+
+        function addToMap(evt) {
+          var symbol;
+          toolbar.deactivate();
+          map.showZoomSlider();
+          switch (evt.geometry.type) {
+            case "point":
+            case "multipoint":
+              symbol = new SimpleMarkerSymbol();
+              break;
+            case "polyline":
+              symbol = new SimpleLineSymbol();
+              break;
+            default:
+              symbol = new SimpleFillSymbol();
+              break;
+          }
+          var graphic = new Graphic(evt.geometry, symbol);
+          map.graphics.add(graphic);
+        }
+
+        registry.byId("clear").on("click", function() {
+        map.graphics.clear();
+      });
+      
+	  var templates= [{
+              label: "A4 Landscape",
+              format: "PDF",
+              layout: "A4 Landscape",
+              layoutOptions: {
+              authorText: "Primaria Mogosoaia",
+             scalebarUnit: "Meters",
+              }
+          }, {
+              label: "A4 Portrait",
+              format: "PDF",
+              layout: "A4 Portrait",
+              layoutOptions: {
+              authorText: "Primaria Mogosoaia",
+              scalebarUnit: "Meters",
+        }
+}];
+
+
+	  var printer = new Print({
+      map: map,
+      templates: templates, 
+      url: "https://sampleserver6.arcgisonline.com/arcgis/rest/services/Utilities/PrintingTools/GPServer/Export%20Web%20Map%20Task"}, 
+	  dom.byId("printButton"));
+	  printer.startup();
+      
+      
+      var sources = [
+                    {
+            locator: new   Locator("https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer"),
+            singleLineFieldName: "SingleLine", 
+            name: "Geocodare mondială",
+            localSearchOptions: {
+            minScale: 300000,
+            distance: 50000
+            },
+            placeholder: "Geocodare mondială",
+            maxResults: 3,
+            maxSuggestions: 6,
+            enableSuggestions: true,
+            minCharacters: 0
+        },
+          {
+          featureLayer: new FeatureLayer("https://services2.arcgis.com/ea6NNJsmaJ0pvK0z/arcgis/rest/services/Parcele_2/FeatureServer/0"),
+          searchFields: ["NR_CAD"],
+          suggestionTemplate: "Număr cadastral: ${NR_CAD}",
+          exactMatch: false,
+          enableInfoWindow: false,
+          outFields: ["*"],
+          name: "Căutare număr cadastral",
+          //labelSymbol: textSymbol,
+          placeholder: "Căutare număr cadastral",
+          maxResults: 6,
+          maxSuggestions: 6,
+          enableSuggestions: true,
+          minCharacters: 0,
+          localSearchOptions: {distance: 5000},
+        }];
+	  
+	  var search = new Search({
+            sources: sources,
+            map: map
+         }, "search");
+         search.startup();
+
+	  var scalebar = new Scalebar({
+          map: map,
+          scalebarUnit: "metric"
+          });
+		  
+     var template = new PopupTemplate ({
+       title: "Informații",
+       fieldInfos: [{
+         fieldName: "CAT_FOL",
+         label: "Categorie de folosință",
+         visible: true
+       },{
+         fieldName: "Intravilan",
+         label: "Parcela se află în intravilan?",
+         visible: true
+       },{
+         fieldName: "Construit",
+         label: "Parcela este construită?",
+         visible: true
+       },{
+         fieldName: "NR_CAD",
+         label: "Număr cadastral",
+         visible: true
+       },{
+         fieldName: "Proprietar",
+         label: "Numele proprietarului",
+         visible: true
+       }]
+     });
+
+     var templateFond = new PopupTemplate({
+       title: "Informații",
+      fieldInfos: [{
+         fieldName: "Monument",
+         label: "Clădirea este monument?",
+         visible: true
+      },{
+        fieldName: "Obiectiv",
+         label: "Clădirea este obiectiv?",
+         visible: true
+      }]
+     });
+
+    var templateZonificare = new PopupTemplate({
+      title: "Informații",
+      fieldInfos: [{
+          fieldName: "ZONIFICARE_FUNCȚIONALĂ",
+          label: "Zonificare funcțională",
+         visible: true
+      }]
+    });
+
+    var templateLimite = new PopupTemplate({
+      title: "Informații",
+      fieldInfos: [{
+          fieldName: "TIP",
+          label: "Tip limită",
+         visible: true
+      }]
+    });
+    
+    var templateLimite2 = new PopupTemplate({
+      title: "Informații",
+      fieldInfos: [{
+          fieldName: "Layer",
+          label: "Tip limită",
+         visible: true
+      }]
+    });
+
+    var templatePUZ = new PopupTemplate({
+      title: "Informații",
+      fieldInfos: [{
+          fieldName: "Denumire",
+          label: "Denumire PUZ",
+          visible: true
+      },{
+         fieldName: "Adresa",
+          label: "Adresă",
+          visible: true
+      },{
+        fieldName: "Numar_Hotarare",
+        label: "Hotărâre",
+        visible: true
+      },{
+        fieldName: "Functiune_Reglementata",
+        label: "Funcțiune reglementată",
+        visible: true
+      },{
+        fieldName: "POT",
+        label: "POT",
+        visible: true
+      },{
+        fieldName: "CUT",
+        label: "CUT",
+        visible: true
+      },{
+        fieldName: "RMH",
+        label: "RMH",
+        visible: true
+      },{
+        fieldName: "Inaltime_maxima",
+        label: "H maxim",
+        visible: true
+      }],
+      showAttachments : true
+    });
+
+    var templatePUD = new PopupTemplate({
+      title: "Informații",
+      fieldInfos:[{
+        fieldName: "Denumire",
+        label: "Denumire PUD",
+        visible: true
+      },{
+        fieldName: "Adresa",
+        label: "Adresă",
+        visible: true
+      },{
+        fieldName: "Numar_Hotarare",
+        label: "Hotărâre",
+        visible: true
+      },{
+        fieldName: "Functiune_Reglementata",
+        label: "Funcțiune reglementată",
+        visible: true
+      },{
+        fieldName: "POT",
+        label: "POT",
+        visible: true
+      },{
+        fieldName: "CUT",
+        label: "CUT",
+        visible: true
+      },{
+        fieldName: "RMH",
+        label: "RMH",
+        visible: true
+      },{
+        fieldName: "Inaltime_maxima",
+        label: "H maxim",
+        visible: true
+      }],
+      showAttachments: true
+    });
+
+    var templateMonumente = new PopupTemplate({
+      title: "Informații",
+      fieldInfos: [{
+          fieldName: "Denumire",
+          label: "Denumire Monument",
+         visible: true
+      },{
+         fieldName: "Cod_LMI",
+          label: "Codul LMI",
+         visible: true
+      },{
+         fieldName: "Datare",
+          label: "Datare",
+         visible: true
+      },{
+         fieldName: "Stil_Arhitectural",
+          label: "Stilul arhitectural",
+         visible: true
+      },{
+         fieldName: "Stare_de_conservare",
+          label: "Stare de conservare",
+         visible: true
+      }],
+      mediaInfos:[{
+        "title" : "Imagine",
+        "type" : "image",
+        "value" : {
+          "sourceURL" : "{Imagini}"
+        }
+      }]
+    });
+
+      var featureLayer = new FeatureLayer("https://services2.arcgis.com/ea6NNJsmaJ0pvK0z/arcgis/rest/services/Parcele_2/FeatureServer/0",{
+        mode: FeatureLayer.MODE_ONDEMAND,
+        outFields : ["*"],
+        infoTemplate :  template
+      });
+      map.addLayer(featureLayer);
+
+      var fondConstruit = new FeatureLayer("https://services2.arcgis.com/ea6NNJsmaJ0pvK0z/arcgis/rest/services/FondConstruit/FeatureServer/0",{
+        mode: FeatureLayer.MODE_ONDEMAND,
+        outFields : ["*"],
+        infoTemplate : templateFond
+      });
+      map.addLayer(fondConstruit);
+      
+    var zonificareFunctionala = new FeatureLayer("https://services2.arcgis.com/ea6NNJsmaJ0pvK0z/arcgis/rest/services/Zonificare_functionala/FeatureServer/0",{
+        mode: FeatureLayer.MODE_ONDEMAND,
+        outFields : ["*"],
+        infoTemplate : templateZonificare,
+        visible : false
+      });
+      map.addLayer(zonificareFunctionala);
+      
+      var Limite = new FeatureLayer("https://services2.arcgis.com/ea6NNJsmaJ0pvK0z/arcgis/rest/services/Limite/FeatureServer/1",{
+        mode: FeatureLayer.MODE_ONDEMAND,
+        outFields : ["*"],
+        infoTemplate : templateLimite
+      });
+      map.addLayer(Limite);
+      
+    var Limite2 = new FeatureLayer("https://services2.arcgis.com/ea6NNJsmaJ0pvK0z/arcgis/rest/services/Limite/FeatureServer/2",{
+        mode: FeatureLayer.MODE_ONDEMAND,
+        outFields : ["*"],
+        infoTemplate : templateLimite2
+      });
+      map.addLayer(Limite2);
+
+      var PUZ = new FeatureLayer("https://services2.arcgis.com/ea6NNJsmaJ0pvK0z/arcgis/rest/services/PUZ/FeatureServer/0",{
+        mode: FeatureLayer.MODE_ONDEMAND,
+        outFields : ["*"],
+        infoTemplate : templatePUZ,
+        hasAttachments : true,
+        visible: false
+      });
+      map.addLayer(PUZ);
+
+      var atachPUZ = new AttachmentEditor({},PUZ);
+      atachPUZ.startup();
+
+      var PUD = new FeatureLayer("https://services2.arcgis.com/ea6NNJsmaJ0pvK0z/arcgis/rest/services/PUD/FeatureServer/0",{
+        mode: FeatureLayer.MODE_ONEMAND,
+        outFields: ["*"],
+        infoTemplate: templatePUD,
+        hasAttachments: true,
+        visible: false
+      });
+      map.addLayer(PUD);
+
+      var atachPUD= new AttachmentEditor({},PUD);
+      atachPUD.startup();
+
+      var Monumente = new FeatureLayer("https://services2.arcgis.com/ea6NNJsmaJ0pvK0z/arcgis/rest/services/Monumente/FeatureServer/0",{
+        mode: FeatureLayer.MODE_ONDEMAND,
+        outFields : ["*"],
+        infoTemplate : templateMonumente,
+        visible: false
+      });
+      map.addLayer(Monumente);
+
+      var Obiective = new FeatureLayer("https://services2.arcgis.com/ea6NNJsmaJ0pvK0z/arcgis/rest/services/Obiective_utilitate/FeatureServer/0",{
+        mode: FeatureLayer.MODE_ONDEMAND,
+        outFields : ["*"],
+        visible: false
+      });
+      map.addLayer(Obiective);
+
+      // var cladiriPct = new FeatureLayer("http://services2.arcgis.com/ea6NNJsmaJ0pvK0z/arcgis/rest/services/Cladiri/FeatureServer/0",{
+      //   mode : FeatureLayer.MODE_ONDEMAND,
+      //   visible: false
+      // });
+      // map.addLayer(cladiriPct);
+
+      layere = [
+          {
+              layer: featureLayer,// required unless featureCollection.
+              //featureCollection: featureCollection, // required unless layerObject. If the layer is a feature collection, should match AGOL feature collection response and not have a layerObject.
+              //sublayers: true, // optional, show sublayers for this layer. Defaults to the widget's 'showSubLayers' property.
+              //showLegend: true, // optional, display a legend for the layer items.
+              //content: , // optional, custom node to insert content. It appears below the title.
+              //showOpacitySlider: true, // optional, display the opacity slider for layer items.
+              //button: true , // optional, custom button node that will appear within the layer title.
+              visibility: true, // optionally set the default visibility
+              // id: "parcele" // optionally set the layer's id
+          },{
+            layer : fondConstruit,
+            visibility : true,
+            // id : "fondConstruit"
+          },{
+            layer : zonificareFunctionala,
+            visibility : false,
+            // id : "zonificareFunctionala"
+          },{
+            layer : Limite,
+            visibility : true,
+            // id : "Limite"
+          },{
+            layer : Limite2,
+            visibility : true,
+            // id : "Limite2"
+          },{
+            layer : PUZ,
+            visibility : false,
+            // id : "PUZ"
+          },{
+            layer: PUD,
+            visibility: false,
+            // id: "PUD"
+          },{
+            layer: Monumente,
+            visibility: false,
+            // id: "Monumente"
+          },{
+            layer: Obiective,
+            visibility: false,
+            // id: "Obiective"
+          }
+      ];
+      
+
+      //adaugare lista de layere 
+      var layerList = new LayerList({
+        map: map,
+        showLegend: true,
+        showSubLayers: false,
+        showOpacitySlider: true,
+        layers: layere
+      },"layerList");
+      layerList.startup();
+
+
+      //add the basemap gallery, in this case we'll display maps from ArcGIS.com including bing maps
+      var basemapGallery = new BasemapGallery({
+        showArcGISBasemaps: true,
+        map: map
+      }, "basemapGallery");
+      basemapGallery.startup();
+      
+      basemapGallery.on("error", function(msg) {
+        console.log("basemap gallery error:  ", msg);
+      });
+    });
+  </script> 
+</head> 
+
+<body class="claro"> 
+  <div data-dojo-type="dijit/layout/BorderContainer" data-dojo-props="design:'sidebar', gutters:false" style="width:100%;height:100%;margin:0;">
+	   
+      <div id="search"></div>
+
+      
+    
+       <div id="printButton"></div>
+       
+       
+          <div id="layerListPane" data-dojo-type="dijit/layout/ContentPane" data-dojo-props="region:'right'">
+             <div data-dojo-type="dijit/layout/TabContainer" style="width: 100%; height: 100%; font-size: 12px"> 
+              <div data-dojo-type="dijit/layout/ContentPane" title="Straturi tematice" data-dojo-props="selected:true">
+                <div id="layerList"></div>
+                <p>Informații:</p> 
+                  <ul class= "Sursa">
+                    <li>Sursa datelor: Primăria Mogoșoaia</li>
+                    <li>Sistem de coordonate: Stereografic 1970</li>
+                    <li>Datum: Dealul Piscului</li>
+                    <li>EPSG: 31700</li>
+                 </ul>
+                 
+              </div>  
+
+              <div data-dojo-type="dijit/layout/ContentPane" title="Modul de Editare" data-dojo-props="selected:true">
+                <p class = "modulE">Pentru o mai bună funcționare și optimizare a aplicației, a fost creat "Modulul de editare" ce permite utilizatorului, pe lângă 
+                  actualizarea geometriilor (creare de noi geometrii, ștergere) și îmbogățirea atributelor. Acesta poate fi accesat cu ușurință, printr-un
+                  click pe butonul de mai jos.
+                </p>
+                <div id="editare">
+                  <button class="editare" style="vertical-align:middle" onclick="window.open('https://alexandradev.maps.arcgis.com/apps/Editor/index.html?appid=7add96e613be44c1a2673d591debabef')"><span>Deschide modulul de editare</span></button>
+                </div>
+                
+                <div id="marcaje" data-dojo-type="dijit/layout/ContentPane" data-dojo-props="region:'top'">
+                  <span>Marcaje:<br /></span>
+                  <button data-dojo-type="dijit/form/Button">Point</button>
+                  <button data-dojo-type="dijit/form/Button">Line</button>
+                  <button data-dojo-type="dijit/form/Button">Polygon</button>
+                  <button data-dojo-type="dijit/form/Button">Arrow</button>
+                  <button data-dojo-type="dijit/form/Button">Triangle</button>
+                  <button data-dojo-type="dijit/form/Button">Circle</button>
+                  <button id="clear" data-dojo-type="dijit.form.Button">Ștergere marcaje</button>
+                </div>
+              </div>
+
+              <div data-dojo-type="dijit/layout/ContentPane" title="Modul de Analiza" data-dojo-props="selected:true">
+              <p class = modulA>Evidențierea și analizarea unor probleme din cadrul teritoriului, reprezintă un prim pas în soluționarea acestora.
+                Așadar, în completarea aplicației, a fost realizat "Modulul de analiză", ce oferă utilizatorului următoarele funcționalități:
+                posibilitatea de a crea o serie de analize precum Arii de deservire, Monitorizarea evoluției fondului construit etc. </p>
+                <div id="analiza">
+                  <button class="analiza" style="vertical-align:middle" onclick="window.open('https://alexandradev.maps.arcgis.com/apps/webappviewer/index.html?id=c6af57ccbbea4aa3a287133aa10f6f1a')"><span>Deschide modulul de analiză</span></button>
+                </div>
+              </div>
+
+            
+
+             </div>
+          </div>
+    
+
+    <div id="map" data-dojo-type="dijit/layout/ContentPane" data-dojo-props="region:'center'" style="padding:0;">
+		 
+
+      <div style="position:absolute; left:65px; top:61px; z-Index:999;">
+        <div data-dojo-type="dijit/TitlePane" 
+             data-dojo-props="title:'Schimbă harta de fundal', closable:false, open:false">
+          <div data-dojo-type="dijit/layout/ContentPane" style="width:350px; height:280px; overflow:auto;">
+            <div id="basemapGallery"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</body> 
+
+</html>

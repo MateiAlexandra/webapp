@@ -1,0 +1,89 @@
+html, body {
+ background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url("http://2.bp.blogspot.com/-j3vHUDaabqI/UhIEfhNkJTI/AAAAAAAAJcE/ssqO77Wi0BY/s1600/MMM_8377.jpg");
+ background-position: right-center;
+ background-size: cover;
+ margin : 0;
+ height: 100%;
+ width: 100%;
+ overflow: hidden;
+}
+
+.transbox {
+	position: absolute;
+  margin: 15px;
+  background-color: #ffffff;
+  /*border: 1px solid black;*/
+  opacity: 0.7;
+  filter: alpha(opacity=20); /* For IE8 and earlier */
+	top: 25%;
+	border-radius: 12px;
+}
+
+.transbox h1{
+	color:floralwhite;
+	font-family: 'Quicksand', sans-serif;
+	font-size: 34px;
+	text-align: center;
+	text-transform: uppercase;
+	-webkit-text-stroke: 0.8px #000000;
+	line-height: 65px;
+}
+.button {
+  display: inline-block;
+  position: absolute;
+  border-radius: 4px;
+  background-color: #B22222;
+  border: none;
+  color: #FFFFFF;
+  text-align: center;
+  font-size: 15px;
+  padding: 10px;
+  width: 150px;
+  transition: all 0.5s;
+  cursor: pointer;
+  margin: 5px;
+  top: 78%;
+  left: 45%;
+}
+
+.button span {
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+  transition: 0.5s;
+}
+
+.button span:after {
+  content: '\00bb';
+  position: absolute;
+  opacity: 0;
+  top: 0;
+  right: -20px;
+  transition: 0.5s;
+}
+
+.button:hover span {
+  padding-right: 25px;
+}
+
+.button:hover span:after {
+  opacity: 1;
+  right: 0;
+}
+
+.moveimage{
+	position: absolute;
+	top: 35px;
+  right: 30px;
+	display: block;
+	height: 50px;
+}
+ 
+.fac_geo {
+	height: 100px;
+	width: 140px;
+	top: 10px;
+	right: 60px;
+
+}
+
